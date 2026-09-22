@@ -1,0 +1,6 @@
+Include
+.env
+Scripts
+_pycache_
+gitignore
+Lib
