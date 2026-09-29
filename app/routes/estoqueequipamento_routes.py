@@ -8,4 +8,5 @@ estoqueequipamento_router = APIRouter()
 
 @estoqueequipamento_router.post("/estoque")
 def insert(categoria : estoqueequipamentos,db: Session = Depends(database.get_db)):
-    insert_categoria(categoria,db)
+    return insert_categoria(categoria,db)
+

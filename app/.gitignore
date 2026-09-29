@@ -1,6 +1,6 @@
 Include
 .env
 Scripts
-_pycache_
+__pycache__
 gitignore
 Lib
