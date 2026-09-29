@@ -1,5 +1,5 @@
 
-from sqlmodel import Session, select
+from sqlmodel import Session, select, or_
 from sqlalchemy.exc import OperationalError, IntegrityError
 
 from entidades.models import (
@@ -31,9 +31,9 @@ def cadastro_emprestimo(emprestimo: Emprestimo, db: Session):
         # Verifica se já existe empréstimo aprovado para esse equipamento
         emprestimo_existente = db.exec(
             select(Emprestimo).where(
-                Emprestimo.id_equipamento == emprestimo.id_equipamento,
-                Emprestimo.status_em == Emprestimo_status.aprovado
-            )
+                Emprestimo.id_equipamento == emprestimo.id_equipamento
+            ).where (or_(Emprestimo.status_em == Emprestimo_status.aprovado,
+                Emprestimo.status_em == Emprestimo_status.pendente))
         ).first()
 
         if emprestimo_existente:
