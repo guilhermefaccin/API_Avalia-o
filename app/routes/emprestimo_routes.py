@@ -1,37 +1,114 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+
+from fastapi import APIRouter, Depends, HTTPException
 from sqlmodel import Session
-from dependencies.dependencies import database
+
 from entidades.models import Emprestimo
-from controllers.Emprestimo_controller import cadastro_emprestimo, atualizar_emprestimo
+from dependencies.dependencies import database
+from controllers.Emprestimo_controller import (
+    inserir_emprestimo,
+    listar_emprestimos,
+    buscar_emprestimo,
+    atualizar_emprestimo,
+    deletar_emprestimo,
+)
 
 emprestimo_router = APIRouter()
 
-@emprestimo_router.post("/emprestimo")
-def cadastroemprestimo(emprestimo : Emprestimo, db:Session = Depends(database.get_db)):
-    try:
-        cadastro_emprestimo(emprestimo,db)
-    except ValueError as e:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,detail=str(e))
-    except RuntimeError as e:
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,detail=str(e))
 
-@emprestimo_router.put("/emprestimo/{id_emprestimo}")
-def atualizar_emprestimo_route(
-    id_emprestimo: int,
+@emprestimo_router.post("/emprestimos", status_code=201)
+def cadastrar_emprestimo(
     emprestimo: Emprestimo,
-    db: Session = Depends(database.get_db)
+    db: Session = Depends(database.get_db),
 ):
     try:
-        return atualizar_emprestimo(id_emprestimo, emprestimo, db)
+        return inserir_emprestimo(emprestimo, db)
 
     except ValueError as e:
         raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=str(e)
+            status_code=404,
+            detail=str(e),
+        ) from e
+
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail="Erro ao cadastrar empréstimo.",
+        ) from e
+
+
+@emprestimo_router.get("/emprestimos")
+def listar_todos_emprestimos(
+    db: Session = Depends(database.get_db),
+):
+    return listar_emprestimos(db)
+
+
+@emprestimo_router.get("/emprestimos/{id_emprestimo}")
+def consultar_emprestimo(
+    id_emprestimo: int,
+    db: Session = Depends(database.get_db),
+):
+    emprestimo = buscar_emprestimo(id_emprestimo, db)
+
+    if emprestimo is None:
+        raise HTTPException(
+            status_code=404,
+            detail="Empréstimo não encontrado.",
         )
 
-    except RuntimeError as e:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=str(e)
+    return emprestimo
+
+
+@emprestimo_router.put("/emprestimos/{id_emprestimo}")
+def editar_emprestimo(
+    id_emprestimo: int,
+    dados: Emprestimo,
+    db: Session = Depends(database.get_db),
+):
+    try:
+        emprestimo = atualizar_emprestimo(
+            id_emprestimo, dados, db
         )
+
+    except ValueError as e:
+        raise HTTPException(
+            status_code=404,
+            detail=str(e),
+        ) from e
+
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail="Erro ao atualizar empréstimo.",
+        ) from e
+
+    if emprestimo is None:
+        raise HTTPException(
+            status_code=404,
+            detail="Empréstimo não encontrado.",
+        )
+
+    return emprestimo
+
+
+@emprestimo_router.delete("/emprestimos/{id_emprestimo}")
+def excluir_emprestimo(
+    id_emprestimo: int,
+    db: Session = Depends(database.get_db),
+):
+    try:
+        excluido = deletar_emprestimo(id_emprestimo, db)
+
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail="Erro ao excluir empréstimo.",
+        ) from e
+
+    if not excluido:
+        raise HTTPException(
+            status_code=404,
+            detail="Empréstimo não encontrado.",
+        )
+
+    return {"mensagem": "Empréstimo excluído com sucesso."}

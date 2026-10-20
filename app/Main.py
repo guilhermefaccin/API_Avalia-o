@@ -1,10 +1,5 @@
 from fastapi import FastAPI, Depends
 from dependencies.dependencies import database
-# import random
-# import datetime
-# from routes import aluno_rotes
-# from routes import cardapio_routes
-# from entidades.agenda import agenda
 from config.Config import settings
 from sqlmodel import Session
 from routes.estoqueequipamento_routes import estoqueequipamento_router
@@ -18,9 +13,6 @@ app = FastAPI(
     version="1.0.0"
 )
 
-# @app.get("/config")
-# def config():
-#     return settings
 
 app.include_router(estoqueequipamento_router)
 app.include_router(equipamento_rauter)

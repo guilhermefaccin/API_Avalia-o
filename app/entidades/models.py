@@ -2,12 +2,15 @@ from sqlmodel import SQLModel, Field, Relationship
 from enum import Enum
 from pydantic import EmailStr
 from datetime import date
+from pydantic import BaseModel
+from sqlalchemy import Column, Enum as SAEnum
+
 
 class estoqueequipamentos(SQLModel,table=True): 
     __tablename__ ="estoque"
     id_estoque : int | None = Field(default=None,primary_key=True)
     nome : str = Field(min_length=5,max_length=100)
-    descricao : str | None = Field(max_length=100)
+    descricao : str | None = Field(default=None,max_length=300)
     emprestimos : list["Emprestimo"] = Relationship(back_populates="estoque")
 
 ###################################################################################################
@@ -36,25 +39,42 @@ class Usuario_Status(str,Enum):
     usuario= "USUARIO"
 
 class UsuarioBASE(SQLModel):
-    id_usuario : int | None = Field(default=None,primary_key=True)
     nome : str | None = Field(max_length=100)
     cpf : str | None = Field(min_length=11,max_length=11,unique=True)
     email : EmailStr | None = Field(max_length=80,unique=True)
-    senha : str | None = Field(max_length=50)
-    perfil : Usuario_Status | None = Field(default=Usuario_Status.gestor)
+    senha: str | None = Field(default=None, max_length=255)
+    perfil: Usuario_Status | None = Field(
+    default=Usuario_Status.gestor,
+    sa_column=Column(
+        SAEnum(
+            Usuario_Status,
+            values_callable=lambda enum_cls: [item.value for item in enum_cls],
+            name="usuario_status"
+        ),
+        nullable=True
+    )
+)
 
 class Usuario(UsuarioBASE, table=True):
     __tablename__= "usuario"
     id_usuario: int | None = Field(default=None,primary_key=True)
     emprestimos: list["Emprestimo"]= Relationship(back_populates="usuario")
 
+class UsuarioLogin(BaseModel):
+    email:str
+    senha:str
+
+class UsuarioLogado(BaseModel):
+    id:int
+    nome:str
+    email:str
+    perfil:list[str]
 ####################################################################################################
 
 class Emprestimo_status(str,Enum):
     pendente= "PENDENTE"
     aprovado= "APROVADO"
     devolvido= "DEVOLVIDO"
-    cancelado= "CANCELADO"
     recusado= "RECUSADO" 
 
 class EmprestimoBASE(SQLModel):
@@ -76,3 +96,5 @@ class Emprestimo(EmprestimoBASE, table=True):
     #######
     id_estoque: int = Field (foreign_key="estoque.id_estoque")
     estoque: estoqueequipamentos = Relationship(back_populates="emprestimos")
+
+#####################################################################################

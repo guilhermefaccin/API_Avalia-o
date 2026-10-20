@@ -14,6 +14,13 @@ class settings(BaseSettings):
     db_user: str
     db_password: str | None = None
 
+     #Informações para autenticação
+    JWT_SECRET_KEY: str              # openssl rand -hex 64
+    JWT_ALGORITHM: str = "HS256"
+    JWT_ACCESS_EXPIRE_MINUTES: int = 15
+    JWT_REFRESH_EXPIRE_DAYS: int = 7
+    JWT_ISSUER: str = "sistema-emprestimo"
+
     model_config = SettingsConfigDict(env_file=".env",env_file_encoding="UTF-8")
 
 settings = settings()
